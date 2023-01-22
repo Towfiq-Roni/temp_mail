@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:temp_mail/screens/login_page.dart';
 import 'package:temp_mail/screens/message_page.dart';
 
 import '../core/const.dart';
@@ -17,7 +18,13 @@ class InboxPage extends StatefulWidget {
 
 class _InboxPageState extends State<InboxPage> {
   List<dynamic> domain = [];
+  var streamController = StreamController.broadcast();
+
   // Map<String, dynamic> mapped = {};
+
+  Future<bool> _onWillPop() async {
+    return false;
+  }
 
   @override
   void initState() {
@@ -38,104 +45,117 @@ class _InboxPageState extends State<InboxPage> {
     //   future: _getMessages(),
     // builder: (context, AsyncSnapshot<dynamic> snapshot) {
     //     if(snapshot.hasData){
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Inbox'),
-      ),
-      endDrawer: Drawer(
-        child: GestureDetector(
-          // child: Container(
-          // color: Colors.cyan,
-          //   padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
-          //   decoration: BoxDecoration(
-          //     color: Colors.brown,
-          //     borderRadius: BorderRadius.circular(8),
-          //   ),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(8, 50, 0, 0),
-            child: const Text(
-              'Log Out',
-              style: TextStyle(color: Colors.black),
-            ),
-          ),
-          // ),
-          onTap: () async {
-            SharedPreferences pref = await SharedPreferences.getInstance();
-            pref.remove('token');
-          },
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: const Text('Inbox'),
+          automaticallyImplyLeading: false,
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-        child: Column(
-          children: [
-            StreamBuilder(
-                stream: _getMessagesStream(),
-                builder: (context, stream) {
-                  // FutureBuilder<dynamic>(
-                  //   future: _getMessages(),
-                  //   builder: (context, AsyncSnapshot<dynamic> snapshot){
-                  //     if(snapshot.hasData){
-                  //   return
-                  if (stream.hasData) {
-                    // setState(() {
-                    //   Future.delayed(Duration(seconds: 5));
-                    //   // _getMessagesStream();
-                    // });
-                    return ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                              child: Container(
-                                padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(8),
+        endDrawer: Drawer(
+          child: GestureDetector(
+            // child: Container(
+            // color: Colors.cyan,
+            //   padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
+            //   decoration: BoxDecoration(
+            //     color: Colors.brown,
+            //     borderRadius: BorderRadius.circular(8),
+            //   ),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(8, 50, 0, 0),
+              child: GestureDetector(
+                child: Text(
+                  'Log Out',
+                  style: TextStyle(color: Colors.black),
+                ),
+                // onTap: () {
+                //   Navigator.push(context,
+                //       MaterialPageRoute(builder: (context) => LogInPage()));
+                // },
+              ),
+            ),
+            // ),
+            onTap: () async {
+              SharedPreferences pref = await SharedPreferences.getInstance();
+              pref.remove('token');
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => LogInPage()));
+            },
+          ),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+          child: Column(
+            children: [
+              StreamBuilder(
+                  stream: _getMessagesStream(),
+                  builder: (context, stream) {
+                    var items = stream.data;
+                    // FutureBuilder<dynamic>(
+                    //   future: _getMessages(),
+                    //   builder: (context, AsyncSnapshot<dynamic> snapshot){
+                    //     if(snapshot.hasData){
+                    //   return
+                    if (stream.connectionState == ConnectionState.active) {
+                      // setState(() {
+                      //   Future.delayed(Duration(seconds: 5));
+                      //   // _getMessagesStream();
+                      // });
+                      return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                                child: Container(
+                                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade300,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(
+                                        items[index]['subject'],
+                                        // domain[0][3],
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      Text(
+                                        'From: ${items[index]['from']['address']}',
+                                        // 'From: ${domain[0][8]}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                  // );
+                                  // } else{
+                                  //   return const CircularProgressIndicator();
+                                  // }
+                                  // }
                                 ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Text(
-                                      domain[index]['subject'],
-                                      // domain[0][3],
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                    Text(
-                                      'From: ${domain[index]['from']['address']}',
-                                      // 'From: ${domain[0][8]}',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                                // );
-                                // } else{
-                                //   return const CircularProgressIndicator();
-                                // }
-                                // }
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => MessagePage(
+                                              value: (items[index]['id'])
+                                                  .toString())));
+                                });
+                          },
+                          separatorBuilder: (BuildContext context, int index) =>
+                              const Divider(
+                                color: Colors.white,
+                                height: 10,
                               ),
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            MessagePage(
-                                                value: (domain[index]['id']).toString())));
-                              });
-                        },
-                        separatorBuilder: (BuildContext context, int index) =>
-                            const Divider(
-                              color: Colors.white,
-                              height: 10,
-                            ),
-                        itemCount: domain.length);
-                  } else {
-                    return CircularProgressIndicator();
-                  }
-                })
-          ],
+                          itemCount: items.length);
+                    } else {
+                      return CircularProgressIndicator();
+                    }
+                  })
+            ],
+          ),
         ),
       ),
     );
@@ -178,14 +198,13 @@ class _InboxPageState extends State<InboxPage> {
   }
 
   Stream<dynamic> _getMessagesStream() async* {
-    // while (true) {
-    StreamController controller;
-    controller = StreamController(
-      onListen:() async* {
-        await Future.delayed(Duration(seconds: 2));
-        yield await _getMessages();
-      }
-    );
-    // }
+    while (true) {
+    // StreamController controller;
+    // controller = StreamController(
+    //     onListen: () async* {
+      await Future.delayed(Duration(seconds: 5));
+      yield await _getMessages();
+    // });
+    }
   }
 }
