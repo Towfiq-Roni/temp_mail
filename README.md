@@ -1,6 +1,6 @@
 # temp_mail
 
-send emails using temporary email
+send emails using temporary email (api.mail.tm)
 
 ## Getting Started
 
